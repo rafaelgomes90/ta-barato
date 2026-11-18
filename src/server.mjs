@@ -23,7 +23,7 @@ function rateLimited(req){
   // Se publicar atrás de Nginx, só aceite X-Forwarded-For se o proxy for confiável;
   // por padrão usamos a conexão de origem para evitar spoofing.
   const remote=req.socket.remoteAddress||'unknown';
-  const isLocalProxy=['127.0.0.1','::1','::ffff:127.0.0.1'].includes(remote);
+  const isLocalProxy=/^(::ffff:)?(127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)|^::1$/.test(remote); // proxy local ou rede interna do Docker
   const xreal=String(req.headers['x-real-ip']||'').trim();
   const ip=isLocalProxy && /^[0-9a-fA-F:.]{3,45}$/.test(xreal) ? xreal : remote;
   const now=Date.now();const r=traffic.get(ip)||{start:now,count:0};
