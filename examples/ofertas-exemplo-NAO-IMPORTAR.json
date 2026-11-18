@@ -1,0 +1,18 @@
+{
+  "_aviso": "DADOS FICTÍCIOS. Não importe em produção; use apenas como exemplo do esquema.",
+  "offers": [
+    {
+      "marketplace": "mercadolivre",
+      "url": "https://produto.mercadolivre.com.br/MLB-1234567890-produto-ficticio-_JM",
+      "productKey": "marca-modelo-cor-128gb",
+      "title": "Produto demonstrativo X 128GB - cor preta",
+      "variant": "128GB / preto",
+      "price": 899.90,
+      "shipping": 0,
+      "affiliateUrl": "https://meli.la/EXEMPLO-NÃO-REAL",
+      "couponCode": "EXEMPLO10",
+      "couponDiscount": 10,
+      "couponMin": 79
+    }
+  ]
+}
