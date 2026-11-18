@@ -1,11 +1,32 @@
 import { createHash } from 'node:crypto';
 
+let meliTok={v:null,exp:0};
+// Token do app (client_credentials) renovado sozinho; ou um token fixo em MERCADOLIVRE_ACCESS_TOKEN.
+async function meliToken() {
+  if (process.env.MERCADOLIVRE_ACCESS_TOKEN) return process.env.MERCADOLIVRE_ACCESS_TOKEN;
+  const id=process.env.MERCADOLIVRE_APP_ID, secret=process.env.MERCADOLIVRE_SECRET;
+  if (!id || !secret) return null;
+  if (meliTok.v && Date.now() < meliTok.exp) return meliTok.v;
+  try {
+    const r=await fetch('https://api.mercadolibre.com/oauth/token',{method:'POST',
+      headers:{'Content-Type':'application/x-www-form-urlencoded',Accept:'application/json'},
+      body:new URLSearchParams({grant_type:'client_credentials',client_id:id,client_secret:secret}),signal:AbortSignal.timeout(6500)});
+    if (!r.ok) return null;
+    const x=await r.json();
+    if (!x.access_token) return null;
+    meliTok={v:x.access_token,exp:Date.now()+Math.max(60,(x.expires_in||3600)-120)*1000};
+    return meliTok.v;
+  } catch { return null; }
+}
+
 export async function fetchMeli(id) {
-  if (!process.env.MERCADOLIVRE_ACCESS_TOKEN) return null;
+  const token=await meliToken();
+  if (!token) return null;
   try {
     const r=await fetch(`https://api.mercadolibre.com/items/${encodeURIComponent(id)}`,{
-      headers:{Authorization:`Bearer ${process.env.MERCADOLIVRE_ACCESS_TOKEN}`},signal:AbortSignal.timeout(6500)
+      headers:{Authorization:`Bearer ${token}`},signal:AbortSignal.timeout(6500)
     });
+    if (r.status===401 || r.status===403) { meliTok={v:null,exp:0}; return null; }
     if (!r.ok) return null;
     const x=await r.json();
     if (x.currency_id !== 'BRL' || !Number.isFinite(x.price) || x.price <= 0 || x.status !== 'active') return null;
