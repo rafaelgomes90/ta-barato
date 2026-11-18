@@ -43,6 +43,13 @@ async function catalogOffers(productId){
   return out;
 }
 
+// Compara o preço com os demais anúncios novos do mesmo produto (agora, não histórico).
+function marketStats(offers,price){
+  const v=offers.map(o=>Number(o.price)).filter(n=>n>0).sort((a,b)=>a-b);
+  if (v.length<2) return null;
+  return { count:v.length, min:v[0], median:v[Math.floor(v.length/2)], cheaper:v.filter(n=>n<price-0.005).length };
+}
+
 async function productInfo(productId){
   const p=await mget(`/products/${encodeURIComponent(productId)}`);
   return { title:p?.name||null, imageUrl:p?.pictures?.[0]?.url||null };
@@ -55,7 +62,8 @@ async function viaCatalogLink(p){
   const best=offers.reduce((m,o)=>Number(o.price)<Number(m.price)?o:m);
   const info=await productInfo(p.productId);
   return { title:info.title||p.productId, price:Number(best.price), originalPrice:best.original_price||null,
-    imageUrl:info.imageUrl, url:p.canonicalUrl, source:'api_mercadolivre_catalogo', variantUncertain:false };
+    imageUrl:info.imageUrl, url:p.canonicalUrl, source:'api_mercadolivre_catalogo', variantUncertain:false,
+    market:marketStats(offers,Number(best.price)) };
 }
 
 // Link de anúncio (/MLB-123...): o ML não deixa ler /items com token de app, então achamos o
@@ -68,13 +76,14 @@ async function viaSlug(p){
   const found=await Promise.all(ids.map(async id=>{
     const offers=await catalogOffers(id);
     const hit=offers.find(o=>o.item_id===p.externalId);
-    return hit?{id,hit}:null;
+    return hit?{id,hit,offers}:null;
   }));
   const m=found.find(Boolean);
   if (!m) return null;
   const info=await productInfo(m.id);
   return { title:info.title||words.join(' '), price:Number(m.hit.price), originalPrice:m.hit.original_price||null,
-    imageUrl:info.imageUrl, url:p.canonicalUrl, source:'api_mercadolivre_catalogo', variantUncertain:false };
+    imageUrl:info.imageUrl, url:p.canonicalUrl, source:'api_mercadolivre_catalogo', variantUncertain:false,
+    market:marketStats(m.offers,Number(m.hit.price)) };
 }
 
 export async function fetchMeli(p){

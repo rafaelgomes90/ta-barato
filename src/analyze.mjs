@@ -46,6 +46,15 @@ export async function analyze(input){
     else if (reliableHistory&&known.finalPrice<=median*0.92) {verdict='good';headline='Preço abaixo do histórico observado';detail='O preço consultado está pelo menos 8% abaixo da mediana das observações dos últimos 30 dias.';}
     else if (reliableHistory&&known.finalPrice>=median*1.12) {verdict='high';headline='Preço acima do histórico observado';detail='O preço consultado está pelo menos 12% acima da mediana. Isso não prova fraude, mas merece atenção.';}
     else if (reliableHistory){verdict='fair';headline='Preço dentro da faixa habitual';detail='Pelo histórico observado, não encontramos evidência de desconto excepcional.';}
+    else if (live?.market && live.market.count>=5 && Math.abs(live.price-known.price)<0.005) {
+      const mk=live.market,br=(n)=>'R$ '+n.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+      const pct=Math.round(Math.abs(1-known.price/mk.median)*100);
+      const base=`Comparação com os ${mk.count} anúncios novos deste produto no Mercado Livre agora (mediana ${br(mk.median)}), não com o histórico de preços.`;
+      const cheap=mk.min<known.price*0.98&&known.price-mk.min>=10?` Há anúncio por ${br(mk.min)}.`:'';
+      if (known.price<=mk.median*0.90) {verdict='good';headline='Abaixo do preço dos outros vendedores';detail=`${base} Este está ${pct}% abaixo da mediana.${cheap}`;}
+      else if (known.price>=mk.median*1.12) {verdict='high';headline='Acima do preço dos outros vendedores';detail=`${base} Este está ${pct}% acima da mediana.${cheap}`;}
+      else {verdict='fair';headline='Na faixa de preço dos outros vendedores';detail=`${base}${cheap||' Sem diferença relevante.'}`;}
+    }
     else {verdict='unknown';headline='Preço localizado, histórico insuficiente';detail='Temos uma cotação recente, mas ainda não há medições suficientes para julgar se é uma promoção verdadeira.';}
   } else if (live?.variantUncertain) {
     headline='Este anúncio tem várias faixas de preço';
