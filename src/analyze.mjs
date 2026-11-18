@@ -15,7 +15,7 @@ export async function analyze(input){
   const parsed=parseProductLink(input.url);
   recordEvent('analysis',parsed.marketplace);
   const stored=getOffer(parsed.marketplace,parsed.externalId);
-  const live=parsed.marketplace==='mercadolivre'?await fetchMeli(parsed.externalId):await fetchShopee(parsed.shopId,parsed.itemId);
+  const live=parsed.marketplace==='mercadolivre'?await fetchMeli(parsed):await fetchShopee(parsed.shopId,parsed.itemId);
   let offer=stored;
   if (live && !live.variantUncertain) {
     offer=saveOffer({ marketplace:parsed.marketplace,externalId:parsed.externalId,

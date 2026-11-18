@@ -20,3 +20,11 @@ test('afiliado deve apontar para a loja correta',()=>{
  assert.equal(validAffiliateUrl('https://shopee.com.br/product/1/2','mercadolivre'),null);
  assert.ok(validAffiliateUrl('https://meli.la/abc123','mercadolivre'));
 });
+test('extrai o título do link do anúncio ML',()=>{
+ const x=parseProductLink('https://produto.mercadolivre.com.br/MLB-3328166367-termometro-digital-febre-_JM');
+ assert.equal(x.slug,'termometro-digital-febre');
+});
+test('link de catálogo /p/ vira produto',()=>{
+ const x=parseProductLink('https://www.mercadolivre.com.br/tenis-x/p/MLB19876543');
+ assert.equal(x.kind,'catalog');assert.equal(x.productId,'MLB19876543');
+});

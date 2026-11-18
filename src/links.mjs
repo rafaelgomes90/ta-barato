@@ -18,9 +18,10 @@ export function parseProductLink(value) {
   if (ML_HOSTS.has(host)) {
     const match = (u.pathname + u.search).match(/MLB-?(\d{7,})/i);
     if (!match) throw new Error('Não encontrei o código do anúncio Mercado Livre. Cole o link de um anúncio específico.');
-    // URLs /p/MLB... podem ser produtos de catálogo, não anúncios vendáveis.
-    if (/^\/p\//i.test(u.pathname)) throw new Error('Este link aponta para uma página de catálogo. Abra um anúncio específico e cole seu link.');
-    return { marketplace:'mercadolivre', externalId:'MLB'+match[1], canonicalUrl:`${u.origin}${u.pathname}` };
+    // /p/MLB... é página de catálogo: o preço vem do menor anúncio novo do produto.
+    if (/\/p\/MLB/i.test(u.pathname)) return { marketplace:'mercadolivre', kind:'catalog', productId:'MLB'+match[1], externalId:'P-MLB'+match[1], canonicalUrl:`${u.origin}${u.pathname}` };
+    const sm = u.pathname.match(/MLB-?\d{7,}-([a-z0-9-]+?)(?:-_JM)?(?:\/|$)/i);
+    return { marketplace:'mercadolivre', externalId:'MLB'+match[1], slug:sm?sm[1]:'', canonicalUrl:`${u.origin}${u.pathname}` };
   }
   if (SH_HOSTS.has(host)) {
     const path = u.pathname;
